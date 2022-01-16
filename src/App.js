@@ -29,19 +29,30 @@ class App extends Component {
         this.removeFromCart = this.removeFromCart.bind(this);
     }
 
+    discountChanged = (coupon) => {
+      let cart = {...this.state.cart};
+      cart.selectedCoupon = coupon;
+      cart.discount = (cart.selectedCoupon / 100) * cart.subTotal;
+      cart.totalPrice = cart.subTotal - cart.discount;
+      this.setState({ cart });
+    };
+
     addToCart(index) {
         const products = this.state.products;
         products[index].cartQuantity = 1;
         let cart = {...this.state.cart};
         cart.items.push({
-            id: products[index].id,
-            price: products[index].price,
-            item: products[index].heading,
-            quantity: 1
+          id: products[index].id,
+          price: products[index].price,
+          item: products[index].heading,
+          quantity: 1
         });
+        cart.subTotal += products[index].price;
+        cart.discount = (cart.selectedCoupon / 100) * cart.subTotal;
+        cart.totalPrice = cart.subTotal - cart.discount;
         this.setState({
-            products,
-            cart
+          products,
+          cart
         })
     }
 
@@ -51,9 +62,17 @@ class App extends Component {
         let cart = {...this.state.cart};
         let cartIndex = this.state.cart.items.findIndex(item => item.id === products[index].id);
         cart.items.splice(cartIndex, 1);
+        cart.subTotal -= products[index].price;
+        cart.discount = (cart.selectedCoupon / 100) * cart.subTotal;
+        cart.totalPrice = cart.subTotal - cart.discount;
+        if(cart.subTotal === 0) {
+          cart.totalPrice = 0;
+          cart.discount = 0;
+          cart.selectedCoupon = '0';
+        }
         this.setState({
-            cart,
-            products
+          cart,
+          products
         })
     }
 
@@ -64,8 +83,8 @@ class App extends Component {
             <div>
                 <h8k-navbar header={title}></h8k-navbar>
                 <div className="layout-row shop-component">
-                    <ProductList products={this.state.products}/>
-                    <Cart cart={this.state.cart}/>
+                    <ProductList products={this.state.products} addToCart={this.addToCart} removeFromCart={this.removeFromCart} />
+                    <Cart cart={this.state.cart} discountChanged={this.discountChanged}/>
                 </div>
             </div>
         );
